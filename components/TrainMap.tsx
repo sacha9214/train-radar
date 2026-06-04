@@ -42,16 +42,33 @@ function inBounds(lat: number, lon: number, b: Bounds, pad = 0.5) {
   return lat >= b.s - pad && lat <= b.n + pad && lon >= b.w - pad && lon <= b.e + pad
 }
 
-// Icon cache keyed by rounded bearing
+// Top-down train SVG silhouette (like Flightradar aircraft icons)
+// Points upward (north) at 0°, rotated by bearing
+function trainSVG(deg: number) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="-14 -14 28 28"
+    style="transform:rotate(${deg}deg);filter:drop-shadow(0 1px 3px rgba(0,0,0,.85));overflow:visible">
+    <!-- Body -->
+    <rect x="-4" y="-11" width="8" height="22" rx="4" ry="4" fill="white" stroke="#1d4ed8" stroke-width="1"/>
+    <!-- Front cab (nose) -->
+    <ellipse cx="0" cy="-11" rx="4" ry="3" fill="#3b82f6"/>
+    <!-- Windows row -->
+    <rect x="-2.5" y="-7" width="5" height="3" rx="1" fill="#93c5fd"/>
+    <rect x="-2.5" y="-2" width="5" height="3" rx="1" fill="#93c5fd"/>
+    <rect x="-2.5" y="3"  width="5" height="3" rx="1" fill="#93c5fd"/>
+    <!-- Rear buffer -->
+    <rect x="-5" y="9" width="10" height="2.5" rx="1" fill="#1d4ed8"/>
+  </svg>`
+}
+
 const iconCache = new Map<number, L.DivIcon>()
 function trainIcon(deg: number) {
   const key = Math.round(deg / 10) * 10
   if (!iconCache.has(key)) {
     iconCache.set(key, L.divIcon({
       className: "",
-      html: `<div style="font-size:20px;transform:rotate(${key}deg);line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.9))">🚆</div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+      html: trainSVG(key),
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
     }))
   }
   return iconCache.get(key)!
