@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useMemo, memo } from "react"
-import { MapContainer, TileLayer, CircleMarker, Marker, Polyline, Popup, useMapEvents, ZoomControl } from "react-leaflet"
+import { MapContainer, TileLayer, CircleMarker, Marker, GeoJSON, Popup, useMapEvents, ZoomControl } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import SearchBar from "./SearchBar"
@@ -134,14 +134,10 @@ const TrainDot = memo(function TrainDot({ lat, lon, from, to, prev, next }: { la
 })
 
 const TrainDetailed = memo(function TrainDetailed({ train, pos }: { train: Train; pos: LivePos }) {
-  const routeLatLng = useMemo(() => train.route.map(([lat, lon]) => [lat, lon] as [number, number]), [train.id])
   return (
-    <>
-      <Polyline positions={routeLatLng} pathOptions={{ color: "#3b82f6", weight: 2.5, opacity: 0.65 }} />
-      <Marker position={[pos.lat, pos.lon]} icon={trainIcon(pos.bearing)}>
-        <Popup><b>{train.from} → {train.to}</b><br /><small>{train.prevStop} → {train.nextStop}</small></Popup>
-      </Marker>
-    </>
+    <Marker position={[pos.lat, pos.lon]} icon={trainIcon(pos.bearing)}>
+      <Popup><b>{train.from} → {train.to}</b><br /><small>{train.prevStop} → {train.nextStop}</small></Popup>
+    </Marker>
   )
 })
 
@@ -156,8 +152,18 @@ export default function TrainMap() {
   const [displayCount, setDisplayCount] = useState(0)
   const [countDone, setCountDone] = useState(false)
   const [lastUpdate, setLastUpdate] = useState("")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [railNetwork, setRailNetwork] = useState<any>(null)
   const mapRef = useRef<L.Map | null>(null)
   const computeTimeRef = useRef<number>(Date.now())
+
+  // Load railway network GeoJSON once
+  useEffect(() => {
+    fetch("/train-radar/rfn.geojson")
+      .then(r => r.json())
+      .then(setRailNetwork)
+      .catch(() => {})
+  }, [])
 
   // Load GTFS once
   useEffect(() => {
@@ -254,6 +260,15 @@ export default function TrainMap() {
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         />
         <MapEvents onZoom={setZoom} onBounds={setBounds} />
+
+        {railNetwork && (
+          <GeoJSON
+            key="rfn"
+            data={railNetwork}
+            style={{ color: "#3b82f6", weight: 1.2, opacity: 0.35 }}
+            interactive={false}
+          />
+        )}
 
         {!detailed && visibleTrains.map(t => {
           const pos = positions[t.id]
