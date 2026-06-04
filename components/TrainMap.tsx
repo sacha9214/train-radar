@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useMemo, memo } from "react"
 import { MapContainer, TileLayer, CircleMarker, Marker, Polyline, Popup, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+import SearchBar from "./SearchBar"
+import AboutModal from "./AboutModal"
 
 // [id, [[lat, lon, depMin, name], ...], firstStop, lastStop]
 type RawTrip = [string, [number, number, number, string][], string, string]
@@ -150,6 +152,8 @@ export default function TrainMap() {
   const [loading, setLoading] = useState(true)
   const [zoom, setZoom] = useState(6)
   const [bounds, setBounds] = useState<Bounds>({ n: 51.5, s: 42, e: 9, w: -5 })
+  const [showAbout, setShowAbout] = useState(false)
+  const [displayCount, setDisplayCount] = useState(0)
   const mapRef = useRef<L.Map | null>(null)
   const computeTimeRef = useRef<number>(Date.now())
 
@@ -178,6 +182,20 @@ export default function TrainMap() {
     const interval = setInterval(compute, 60000)
     return () => clearInterval(interval)
   }, [rawTrips])
+
+  // Animate counter on load
+  useEffect(() => {
+    if (!trains.length) return
+    const target = trains.length
+    const step = Math.ceil(target / 40)
+    let current = 0
+    const t = setInterval(() => {
+      current = Math.min(current + step, target)
+      setDisplayCount(current)
+      if (current >= target) clearInterval(t)
+    }, 30)
+    return () => clearInterval(t)
+  }, [trains.length])
 
   // Animate positions every second
   useEffect(() => {
@@ -212,6 +230,17 @@ export default function TrainMap() {
     return Array.from(seen.values())
   }, [visibleTrains, showStations, bounds])
 
+  // All unique stations for search
+  const allStations = useMemo(() => {
+    const seen = new Map<string, { name: string; lat: number; lon: number }>()
+    for (const t of trains) {
+      for (const [lat, lon, name] of t.route) {
+        if (!seen.has(name)) seen.set(name, { name, lat, lon })
+      }
+    }
+    return Array.from(seen.values())
+  }, [trains])
+
   return (
     <div className="relative w-full h-full">
       <MapContainer center={[46.8, 2.3]} zoom={6} className="w-full h-full" zoomControl ref={mapRef} preferCanvas>
@@ -236,23 +265,49 @@ export default function TrainMap() {
         ))}
       </MapContainer>
 
+      {/* Header */}
       <div className="absolute top-4 left-4 z-[1000] bg-gray-900/90 backdrop-blur rounded-xl px-4 py-3 text-white shadow-xl">
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold">🚆 Train Radar</span>
           <span className="text-xs bg-blue-600 rounded-full px-2 py-0.5">TER France</span>
+          <button
+            onClick={() => setShowAbout(true)}
+            className="ml-1 text-gray-400 hover:text-white transition-colors"
+            title="À propos"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
         </div>
-        <div className="text-xs text-gray-400 mt-1">
-          {loading ? "Chargement des données..." : `${trains.length} trains · ${visibleTrains.length} visibles`}
-        </div>
+        {loading ? (
+          <div className="text-xs text-gray-400 mt-1">Chargement des données...</div>
+        ) : (
+          <div className="mt-1">
+            <span className="text-2xl font-bold tabular-nums text-white">{displayCount.toLocaleString("fr-FR")}</span>
+            <span className="text-xs text-gray-400 ml-1">trains en circulation</span>
+          </div>
+        )}
         <div className="text-xs text-gray-500 mt-0.5">Horaires typiques · Données SNCF</div>
       </div>
 
+      {/* Search */}
+      <div className="absolute top-4 right-4 z-[1000]">
+        <SearchBar
+          stations={allStations}
+          onSelect={(lat, lon) => mapRef.current?.setView([lat, lon], 13)}
+        />
+      </div>
+
+      {/* Recenter */}
       <button
         onClick={() => mapRef.current?.setView([46.8, 2.3], 6)}
         className="absolute bottom-6 right-4 z-[1000] bg-white rounded-lg px-3 py-2 text-sm font-medium shadow-lg border border-gray-200 hover:bg-gray-50"
       >
         France entière
       </button>
+
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
     </div>
   )
 }
