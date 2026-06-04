@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useMemo, memo } from "react"
-import { MapContainer, TileLayer, CircleMarker, Marker, Polyline, Popup, useMapEvents } from "react-leaflet"
+import { MapContainer, TileLayer, CircleMarker, Marker, Polyline, Popup, useMapEvents, ZoomControl } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import SearchBar from "./SearchBar"
@@ -247,7 +247,8 @@ export default function TrainMap() {
 
   return (
     <div className="relative w-full h-full">
-      <MapContainer center={[46.8, 2.3]} zoom={6} className="w-full h-full" zoomControl ref={mapRef} preferCanvas>
+      <MapContainer center={[46.8, 2.3]} zoom={6} className="w-full h-full" zoomControl={false} ref={mapRef} preferCanvas>
+        <ZoomControl position="bottomleft" />
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
