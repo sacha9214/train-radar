@@ -6,19 +6,13 @@ import "leaflet/dist/leaflet.css"
 
 interface Train {
   id: string
-  name: string
   lat: number
   lon: number
-  delayMinutes: number
-  nextStop: string
+  from: string
+  to: string
   prevStop: string
+  nextStop: string
   progress: number
-}
-
-function delayColor(delay: number) {
-  if (delay <= 0) return "#22c55e"
-  if (delay <= 5) return "#f59e0b"
-  return "#ef4444"
 }
 
 function RecenterButton() {
@@ -37,6 +31,7 @@ export default function TrainMap() {
   const [trains, setTrains] = useState<Train[]>([])
   const [loading, setLoading] = useState(true)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [selected, setSelected] = useState<Train | null>(null)
 
   async function fetchTrains() {
     try {
@@ -61,12 +56,7 @@ export default function TrainMap() {
 
   return (
     <div className="relative w-full h-full">
-      <MapContainer
-        center={[46.8, 2.3]}
-        zoom={6}
-        className="w-full h-full"
-        zoomControl={true}
-      >
+      <MapContainer center={[46.8, 2.3]} zoom={6} className="w-full h-full" zoomControl>
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
@@ -76,22 +66,16 @@ export default function TrainMap() {
           <CircleMarker
             key={train.id}
             center={[train.lat, train.lon]}
-            radius={7}
-            pathOptions={{
-              color: delayColor(train.delayMinutes),
-              fillColor: delayColor(train.delayMinutes),
-              fillOpacity: 0.9,
-              weight: 2,
-            }}
+            radius={5}
+            pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.85, weight: 1.5 }}
+            eventHandlers={{ click: () => setSelected(train) }}
           >
             <Popup>
-              <div className="text-sm font-medium">{train.name}</div>
-              <div className="text-xs text-gray-600 mt-1">
-                {train.prevStop} → {train.nextStop}
+              <div className="text-sm font-semibold">{train.from} → {train.to}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {train.prevStop} → <span className="font-medium text-gray-700">{train.nextStop}</span>
               </div>
-              <div className={`text-xs mt-1 font-semibold ${train.delayMinutes > 0 ? "text-red-500" : "text-green-500"}`}>
-                {train.delayMinutes > 0 ? `+${train.delayMinutes} min` : "À l'heure"}
-              </div>
+              <div className="text-xs mt-1 text-blue-600">{Math.round(train.progress * 100)}% du trajet</div>
             </Popup>
           </CircleMarker>
         ))}
@@ -103,19 +87,13 @@ export default function TrainMap() {
       <div className="absolute top-4 left-4 z-[1000] bg-gray-900/90 backdrop-blur rounded-xl px-4 py-3 text-white shadow-xl">
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold">🚆 Train Radar</span>
-          <span className="text-xs bg-blue-600 rounded-full px-2 py-0.5">LIVE</span>
+          <span className="text-xs bg-blue-600 rounded-full px-2 py-0.5">TER France</span>
         </div>
         <div className="text-xs text-gray-400 mt-1">
           {loading ? "Chargement..." : `${trains.length} trains en circulation`}
           {lastUpdate && ` · ${lastUpdate.toLocaleTimeString("fr-FR")}`}
         </div>
-      </div>
-
-      {/* Legend */}
-      <div className="absolute bottom-6 left-4 z-[1000] bg-gray-900/90 backdrop-blur rounded-xl px-3 py-2 text-white text-xs shadow-xl space-y-1">
-        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500 inline-block" /> À l'heure</div>
-        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> &lt; 5 min</div>
-        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Retard important</div>
+        <div className="text-xs text-gray-500 mt-0.5">Horaires typiques · Données SNCF</div>
       </div>
     </div>
   )
