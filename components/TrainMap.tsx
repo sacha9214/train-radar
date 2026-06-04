@@ -154,6 +154,8 @@ export default function TrainMap() {
   const [bounds, setBounds] = useState<Bounds>({ n: 51.5, s: 42, e: 9, w: -5 })
   const [showAbout, setShowAbout] = useState(false)
   const [displayCount, setDisplayCount] = useState(0)
+  const [countDone, setCountDone] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState("")
   const mapRef = useRef<L.Map | null>(null)
   const computeTimeRef = useRef<number>(Date.now())
 
@@ -189,10 +191,11 @@ export default function TrainMap() {
     const target = trains.length
     const step = Math.ceil(target / 40)
     let current = 0
+    setCountDone(false)
     const t = setInterval(() => {
       current = Math.min(current + step, target)
       setDisplayCount(current)
-      if (current >= target) clearInterval(t)
+      if (current >= target) { clearInterval(t); setCountDone(true) }
     }, 30)
     return () => clearInterval(t)
   }, [trains.length])
@@ -205,6 +208,7 @@ export default function TrainMap() {
       const pos: Record<string, LivePos> = {}
       for (const t of trains) pos[t.id] = interpPos(t, elapsed)
       setPositions(pos)
+      setLastUpdate(new Date().toLocaleTimeString("fr-FR"))
     }, 1000)
     return () => clearInterval(tick)
   }, [trains])
@@ -266,29 +270,46 @@ export default function TrainMap() {
       </MapContainer>
 
       {/* Header */}
-      <div className="absolute top-4 left-4 z-[1000] bg-gray-900/90 backdrop-blur rounded-xl px-4 py-3 text-white shadow-xl">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold">🚆 Train Radar</span>
-          <span className="text-xs bg-blue-600 rounded-full px-2 py-0.5">TER France</span>
-          <button
-            onClick={() => setShowAbout(true)}
-            className="ml-1 text-gray-400 hover:text-white transition-colors"
-            title="À propos"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-        </div>
-        {loading ? (
-          <div className="text-xs text-gray-400 mt-1">Chargement des données...</div>
-        ) : (
-          <div className="mt-1">
-            <span className="text-2xl font-bold tabular-nums text-white">{displayCount.toLocaleString("fr-FR")}</span>
-            <span className="text-xs text-gray-400 ml-1">trains en circulation</span>
+      <div className="absolute top-4 left-4 z-[1000] w-[280px] rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.15)] px-5 py-4 text-white">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl leading-none">🚆</span>
+            <div>
+              <div className="text-base font-bold tracking-tight leading-none text-gradient">TRAIN RADAR</div>
+              <div className="text-[11px] text-white/50 mt-1">France · Temps réel</div>
+            </div>
           </div>
-        )}
-        <div className="text-xs text-gray-500 mt-0.5">Horaires typiques · Données SNCF</div>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-2 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" />
+              Live
+            </span>
+            <button
+              onClick={() => setShowAbout(true)}
+              className="text-white/40 hover:text-white transition-colors duration-200"
+              title="À propos"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <span
+            key={countDone ? "done" : "counting"}
+            className={`text-4xl font-extrabold tabular-nums text-gradient ${countDone ? "animate-count-glow" : ""}`}
+          >
+            {displayCount.toLocaleString("fr-FR")}
+          </span>
+          <span className="text-xs text-white/50 ml-2">trains en circulation</span>
+        </div>
+
+        <div className="mt-2 text-[11px] text-white/40 tabular-nums">
+          {visibleTrains.length.toLocaleString("fr-FR")} visibles
+          {lastUpdate && <span> · maj {lastUpdate}</span>}
+        </div>
       </div>
 
       {/* Search */}
@@ -302,10 +323,32 @@ export default function TrainMap() {
       {/* Recenter */}
       <button
         onClick={() => mapRef.current?.setView([46.8, 2.3], 6)}
-        className="absolute bottom-6 right-4 z-[1000] bg-white rounded-lg px-3 py-2 text-sm font-medium shadow-lg border border-gray-200 hover:bg-gray-50"
+        className="absolute bottom-6 right-4 z-[1000] flex items-center gap-2 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 px-3.5 py-2.5 text-sm font-medium text-white shadow-[0_0_30px_rgba(59,130,246,0.15)] hover:bg-white/10 hover:border-white/20 transition-all duration-200"
       >
+        <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
         France entière
       </button>
+
+      {/* Loading screen */}
+      {loading && (
+        <div className="absolute inset-0 z-[3000] flex flex-col items-center justify-center bg-[#0a0a0f] overflow-hidden">
+          <div className="animate-float-y text-6xl mb-6">🚆</div>
+          <div className="text-2xl font-extrabold tracking-tight text-gradient">TRAIN RADAR</div>
+          <div className="text-sm text-white/50 mt-1 mb-8">France · Temps réel</div>
+
+          <div className="relative w-64 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className="absolute inset-y-0 w-1/2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 animate-[loader-progress_1.4s_ease-in-out_infinite]" />
+          </div>
+          <div className="text-xs text-white/40 mt-4">Chargement des trains…</div>
+
+          {/* train crossing the screen */}
+          <div className="absolute bottom-16 w-full h-8">
+            <div className="absolute top-0 animate-train-cross text-2xl">🚄</div>
+          </div>
+        </div>
+      )}
 
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
     </div>
