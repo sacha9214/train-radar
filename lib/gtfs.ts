@@ -6,13 +6,16 @@ type RawTrip = [string, [number, number, number, string][], string, string]
 
 export interface LiveTrain {
   id: string
-  lat: number
-  lon: number
+  lat1: number
+  lon1: number
+  lat2: number
+  lon2: number
+  progress: number   // 0-1 at time of fetch
+  speed: number      // progress units per minute
   from: string
   to: string
   prevStop: string
   nextStop: string
-  progress: number
 }
 
 let cache: RawTrip[] | null = null
@@ -59,17 +62,18 @@ export function getActiveTrains(): LiveTrain[] {
 
     const segDuration = dep2 - dep1
     const progress = segDuration > 0 ? (nowMin - dep1) / segDuration : 0
-    const pos = interpolate(lat1, lon1, lat2, lon2, Math.min(1, Math.max(0, progress)))
+    const segDurationMin = dep2 - dep1
+    const speed = segDurationMin > 0 ? 1 / segDurationMin : 0
 
     active.push({
       id,
-      lat: Math.round(pos.lat * 10000) / 10000,
-      lon: Math.round(pos.lon * 10000) / 10000,
+      lat1, lon1, lat2, lon2,
+      progress: Math.min(1, Math.max(0, progress)),
+      speed,
       from,
       to,
       prevStop: name1,
       nextStop: name2,
-      progress,
     })
   }
 
