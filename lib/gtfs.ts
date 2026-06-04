@@ -16,7 +16,7 @@ export interface LiveTrain {
   to: string
   prevStop: string
   nextStop: string
-  route: [number, number][] // full route [[lat,lon],...]
+  route: [number, number, string][] // full route [[lat,lon,name],...]
 }
 
 let cache: RawTrip[] | null = null
@@ -66,7 +66,7 @@ export function getActiveTrains(): LiveTrain[] {
     const segDurationMin = dep2 - dep1
     const speed = segDurationMin > 0 ? 1 / segDurationMin : 0
 
-    const route: [number, number][] = stops.map((s) => [s[0], s[1]])
+    const route: [number, number, string][] = stops.map((s) => [s[0], s[1], s[3]])
 
     active.push({
       id,
