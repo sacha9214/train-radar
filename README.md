@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Train Radar
 
-## Getting Started
+Carte des trains TER en circulation en France, avec la position de chaque train recalculée à la seconde entre deux gares.
 
-First, run the development server:
+**[Ouvrir la carte →](https://sacha9214.github.io/train-radar/)**
+
+## Fonctionnalités
+
+- **Positions interpolées** à la seconde entre la gare précédente et la suivante, avec le cap du train
+- **Tracé réel du réseau ferré national** (GeoJSON SNCF)
+- **Affichage adapté au zoom** : points à grande échelle, silhouettes orientées et trajet complet de près
+- **Recherche de gare**
+- **Rendu canvas** avec culling du viewport pour garder la carte fluide avec des centaines de trains
+
+## Fonctionnement
+
+1. `scripts/preprocess-gtfs.ts` convertit l'export GTFS de la SNCF en un fichier compact, `public/gtfs-today.json` : trajets, arrêts, coordonnées et heures de passage
+2. Dans le navigateur, `components/TrainMap.tsx` charge ce fichier et calcule, pour chaque train en circulation, sa position entre deux arrêts
+3. Le site est exporté en statique (`output: "export"`) et publié sur GitHub Pages par GitHub Actions à chaque push sur `main`
+
+## Limites
+
+Les positions viennent des horaires théoriques, pas du GPS des trains : les retards et les suppressions n'apparaissent pas.
+
+## Stack
+
+Next.js 16 · React 19 · TypeScript · Leaflet · Tailwind CSS 4 · GitHub Actions
+
+## Lancer en local
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# http://localhost:3000/train-radar
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Licence
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](LICENSE)
