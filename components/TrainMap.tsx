@@ -126,6 +126,15 @@ function Basemap() {
   const map = useMap()
   useEffect(() => {
     const layer = maplibreGL({ style: BASEMAP_STYLE, attributionControl: { customAttribution: BASEMAP_ATTRIBUTION } }).addTo(map)
+    const gl = layer.getMaplibreMap()
+    // The style labels places in English: use French names, falling back to the local name
+    gl.once("style.load", () => {
+      for (const l of gl.getStyle().layers) {
+        if (l.type === "symbol" && JSON.stringify(l.layout?.["text-field"] ?? "").includes("name_en")) {
+          gl.setLayoutProperty(l.id, "text-field", ["coalesce", ["get", "name:fr"], ["get", "name"]])
+        }
+      }
+    })
     return () => { layer.remove() }
   }, [map])
   return null
