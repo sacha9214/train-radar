@@ -4,6 +4,8 @@ Carte des trains TER en circulation en France, avec la position de chaque train 
 
 **[Ouvrir la carte →](https://sacha9214.github.io/train-radar/)**
 
+![Carte des trains en circulation](docs/apercu.png)
+
 ## Fonctionnalités
 
 - **Positions interpolées** à la seconde entre la gare précédente et la suivante, avec le cap du train
