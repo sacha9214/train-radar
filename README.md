@@ -24,7 +24,7 @@ Les positions viennent des horaires théoriques, pas du GPS des trains : les ret
 
 ## Stack
 
-Next.js 16 · React 19 · TypeScript · Leaflet · Tailwind CSS 4 · GitHub Actions
+Next.js 16 · React 19 · TypeScript · Leaflet · MapLibre GL (fond de carte OpenFreeMap) · Tailwind CSS 4 · GitHub Actions
 
 ## Lancer en local
 

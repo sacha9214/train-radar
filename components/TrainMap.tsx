@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState, useMemo, memo } from "react"
-import { MapContainer, TileLayer, CircleMarker, Marker, GeoJSON, Popup, useMapEvents, ZoomControl } from "react-leaflet"
+import { MapContainer, CircleMarker, Marker, GeoJSON, Popup, useMap, useMapEvents, ZoomControl } from "react-leaflet"
 import L from "leaflet"
+import { maplibreGL } from "@maplibre/maplibre-gl-leaflet"
 import "leaflet/dist/leaflet.css"
+import "maplibre-gl/dist/maplibre-gl.css"
 import SearchBar from "./SearchBar"
 import AboutModal from "./AboutModal"
 
@@ -115,6 +117,19 @@ function stationIcon(name: string) {
 }
 
 const canvasRenderer = typeof window !== "undefined" ? L.canvas({ padding: 0.5 }) : undefined
+
+// OpenFreeMap "Dark" style (Dark Matter): vector tiles, no API key, no request limit
+const BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/dark"
+const BASEMAP_ATTRIBUTION = '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+
+function Basemap() {
+  const map = useMap()
+  useEffect(() => {
+    const layer = maplibreGL({ style: BASEMAP_STYLE, attributionControl: { customAttribution: BASEMAP_ATTRIBUTION } }).addTo(map)
+    return () => { layer.remove() }
+  }, [map])
+  return null
+}
 
 function MapEvents({ onZoom, onBounds }: { onZoom: (z: number) => void; onBounds: (b: Bounds) => void }) {
   const map = useMapEvents({
@@ -253,12 +268,9 @@ export default function TrainMap() {
 
   return (
     <div className="relative w-full h-full">
-      <MapContainer center={[46.8, 2.3]} zoom={6} className="w-full h-full" zoomControl={false} ref={mapRef} preferCanvas>
+      <MapContainer center={[46.8, 2.3]} zoom={6} maxZoom={18} className="w-full h-full" zoomControl={false} ref={mapRef} preferCanvas>
         <ZoomControl position="bottomleft" />
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        />
+        <Basemap />
         <MapEvents onZoom={setZoom} onBounds={setBounds} />
 
         {railNetwork && (
