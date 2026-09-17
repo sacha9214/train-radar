@@ -1,34 +1,34 @@
 # Train Radar
 
-Carte des trains TER en circulation en France, avec la position de chaque train recalculée à la seconde entre deux gares.
+Live map of the regional (TER) trains running across France, with each train's position recomputed every second between two stations.
 
-**[Ouvrir la carte →](https://sacha9214.github.io/train-radar/)**
+**[Open the map →](https://sacha9214.github.io/train-radar/)**
 
-![Carte des trains en circulation](docs/apercu.png)
+![Map of trains currently running](docs/apercu.png)
 
-## Fonctionnalités
+## Features
 
-- **Positions interpolées** à la seconde entre la gare précédente et la suivante, avec le cap du train
-- **Tracé réel du réseau ferré national** (GeoJSON SNCF)
-- **Affichage adapté au zoom** : points à grande échelle, silhouettes orientées et trajet complet de près
-- **Recherche de gare**
-- **Rendu canvas** avec culling du viewport pour garder la carte fluide avec des centaines de trains
+- **Interpolated positions**, updated every second between the previous and next station, with the train's heading
+- **Real national rail network geometry** (SNCF GeoJSON)
+- **Zoom-aware rendering**: dots when zoomed out, oriented train silhouettes and the full route when zoomed in
+- **Station search**
+- **Canvas rendering** with viewport culling, so the map stays smooth with hundreds of trains
 
-## Fonctionnement
+## How it works
 
-1. `scripts/preprocess-gtfs.ts` convertit l'export GTFS de la SNCF en un fichier compact, `public/gtfs-today.json` : trajets, arrêts, coordonnées et heures de passage
-2. Dans le navigateur, `components/TrainMap.tsx` charge ce fichier et calcule, pour chaque train en circulation, sa position entre deux arrêts
-3. Le site est exporté en statique (`output: "export"`) et publié sur GitHub Pages par GitHub Actions à chaque push sur `main`
+1. `scripts/preprocess-gtfs.ts` turns the SNCF GTFS export into a compact file, `public/gtfs-today.json`: trips, stops, coordinates and times
+2. In the browser, `components/TrainMap.tsx` loads that file and computes the position of every running train between two stops
+3. The site is statically exported (`output: "export"`) and published to GitHub Pages by GitHub Actions on every push to `main`
 
-## Limites
+## Limitations
 
-Les positions viennent des horaires théoriques, pas du GPS des trains : les retards et les suppressions n'apparaissent pas.
+Positions come from scheduled timetables, not from train GPS: delays and cancellations are not shown.
 
 ## Stack
 
-Next.js 16 · React 19 · TypeScript · Leaflet · MapLibre GL (fond de carte OpenFreeMap) · Tailwind CSS 4 · GitHub Actions
+Next.js 16 · React 19 · TypeScript · Leaflet · MapLibre GL (OpenFreeMap basemap) · Tailwind CSS 4 · GitHub Actions
 
-## Lancer en local
+## Run locally
 
 ```bash
 npm ci
@@ -36,6 +36,6 @@ npm run dev
 # http://localhost:3000/train-radar
 ```
 
-## Licence
+## License
 
 [MIT](LICENSE)
